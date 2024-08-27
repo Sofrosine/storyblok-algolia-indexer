@@ -6,7 +6,7 @@ class StoryblokAlgoliaIndexer {
   constructor({
     algoliaAppId,
     algoliaApiAdminToken,
-    algoliaIndexName,
+    algoliaIndexNamePrefix, // Changed to a prefix to use in index naming
     storyblokContentDeliveryApiToken,
     options
   }) {
@@ -30,28 +30,43 @@ class StoryblokAlgoliaIndexer {
         contentRequests.push(storyblok.get('cdn/stories/', { ...storyblokOptions, page }));
       }
 
-      const index = algolia.initIndex(algoliaIndexName);
-
       // Make all requests in parallel using axios
       axios.all(contentRequests).then(axios.spread(async (...responses) => {
-        let records = [];
+        const groupedRecords = {}; // Object to store records grouped by component type
+
+        // Group records by component type
         responses.forEach((response) => {
           const stories = response.data.stories;
 
-          // Extract the `content` field from each story and assign a unique objectID
           stories.forEach(story => {
-            let content = story.content;
-            // content.objectID = content._uid; // Set Algolia objectID
-            content.objectID = story.uuid; // Set Algolia objectID
-            records.push(content);
+            const content = story.content;
+            const component = content.component;
+            
+            if (!groupedRecords[component]) {
+              groupedRecords[component] = [];
+            }
+
+            content.objectID = content._uid; // Set Algolia objectID
+            groupedRecords[component].push(content);
           });
         });
 
-        // Save objects to Algolia index
-        await index.saveObjects(records, { autoGenerateObjectIDIfNotExist: false }).wait().catch(e => { console.log(e) });
-        console.log('Index stored with ' + records.length + ' entries.');
-      })).catch(e => { console.log(e) });
-    }).catch(e => { console.log(e) });
+        // Save each group to a separate Algolia index
+        for (const component in groupedRecords) {
+          if (groupedRecords.hasOwnProperty(component)) {
+            const indexName = `${algoliaIndexNamePrefix}_${component}`;
+            const index = algolia.initIndex(indexName);
+            const records = groupedRecords[component];
+
+            await index.saveObjects(records, { autoGenerateObjectIDIfNotExist: false }).wait().catch(e => {
+              console.error(`Error indexing component ${component}:`, e);
+            });
+
+            console.log(`Index '${indexName}' stored with ${records.length} entries.`);
+          }
+        }
+      })).catch(e => { console.error('Error with Axios requests:', e) });
+    }).catch(e => { console.error('Error fetching stories from Storyblok:', e) });
   }
 }
 
