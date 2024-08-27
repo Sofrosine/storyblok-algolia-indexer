@@ -6,7 +6,6 @@ class StoryblokAlgoliaIndexer {
   constructor({
     algoliaAppId,
     algoliaApiAdminToken,
-    algoliaIndexNamePrefix, // Changed to a prefix to use in index naming
     storyblokContentDeliveryApiToken,
     options
   }) {
@@ -54,7 +53,7 @@ class StoryblokAlgoliaIndexer {
         // Save each group to a separate Algolia index
         for (const component in groupedRecords) {
           if (groupedRecords.hasOwnProperty(component)) {
-            const indexName = `${algoliaIndexNamePrefix}_${component}`;
+            const indexName = component
             const index = algolia.initIndex(indexName);
             const records = groupedRecords[component];
 
