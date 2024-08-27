@@ -41,7 +41,8 @@ class StoryblokAlgoliaIndexer {
           // Extract the `content` field from each story and assign a unique objectID
           stories.forEach(story => {
             let content = story.content;
-            content.objectID = content._uid; // Set Algolia objectID
+            // content.objectID = content._uid; // Set Algolia objectID
+            content.objectID = story.uuid; // Set Algolia objectID
             records.push(content);
           });
         });
