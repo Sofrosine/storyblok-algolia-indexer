@@ -39,7 +39,7 @@ class StoryblokAlgoliaIndexer {
           })
 
           records.forEach(record => {
-              record.objectID = record._uid
+              record.objectID = record.uuid
           })
           
           await index.saveObjects(records, { autoGenerateObjectIDIfNotExist: false }).wait().catch(e => { console.log(e) })
