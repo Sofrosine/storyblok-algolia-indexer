@@ -35,6 +35,7 @@ class StoryblokAlgoliaIndexer {
           let records = []
           responses.forEach((response) => {
               let data = response.data
+            console.log("THIS IS DATA", data")
               records = records.concat(data.stories)
           })
 
