@@ -45,7 +45,7 @@ class StoryblokAlgoliaIndexer {
               groupedRecords[component] = [];
             }
 
-            content.objectID = content._uid; // Set Algolia objectID
+            content.objectID = story.uuid; // Set Algolia objectID
             groupedRecords[component].push(content);
           });
         });
