@@ -19,6 +19,20 @@ class StoryblokAlgoliaIndexer {
       version: 'draft'
     };
 
+    // Helper function to convert numeric strings to numbers in an object
+    const convertNumericStrings = (obj) => {
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+          if (typeof value === 'string' && !isNaN(value) && value.trim() !== '') {
+            obj[key] = Number(value);
+          } else if (typeof value === 'object' && value !== null) {
+            convertNumericStrings(value); // Recursively apply to nested objects
+          }
+        }
+      }
+    };
+
     // Fetch the initial set of stories to determine pagination
     storyblok.get('cdn/stories/', storyblokOptions).then(async res => {
       const total = res.headers.total;
@@ -40,7 +54,10 @@ class StoryblokAlgoliaIndexer {
           stories.forEach(story => {
             const content = story.content;
             const component = content.component;
-            
+
+            // Convert numeric strings to numbers
+            convertNumericStrings(content);
+
             if (!groupedRecords[component]) {
               groupedRecords[component] = [];
             }
@@ -53,7 +70,7 @@ class StoryblokAlgoliaIndexer {
         // Save each group to a separate Algolia index
         for (const component in groupedRecords) {
           if (groupedRecords.hasOwnProperty(component)) {
-            const indexName = component
+            const indexName = component;
             const index = algolia.initIndex(indexName);
             const records = groupedRecords[component];
 
